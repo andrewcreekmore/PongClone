@@ -82,6 +82,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		performanceFrequency = (float)performance.QuadPart;
 	}
 
+	//
+
 	// GAME LOOP
 	while (bGameRunning)
 	{
@@ -100,14 +102,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 				case WM_KEYDOWN:
 				{
 					unsigned int vkCode = static_cast<unsigned int>(message.wParam);
-					bool bIsKeyDown = ((message.lParam & ((long long)1 << 31)) == 0);
+					bool bIsKeyDown = ((message.lParam & (static_cast<long long>(1) << 31)) == 0);
 
 					// helper function
 					#define processKey(key, vk) \
 					case vk: \
 					{ \
-						input.keyState[key].bIsDown = bIsKeyDown; \
 						input.keyState[key].bHasChanged = bIsKeyDown != input.keyState[key].bIsDown; \
+						input.keyState[key].bIsDown = bIsKeyDown; \
 					} \
 					break;
 
