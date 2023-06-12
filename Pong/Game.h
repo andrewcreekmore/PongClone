@@ -17,7 +17,7 @@ public:
 	float halfSize_x;
 	float halfSize_y;
 
-	Entity()
+	Entity() // set defaults
 	{
 		position_x = 0.0f;
 		position_y = 0.0f;
@@ -28,13 +28,20 @@ public:
 		halfSize_x = 0.f;
 		halfSize_y = 0.f;
 	}
+
+	// helper function for collision checks
+	bool aabbVSaabb(float position1_x, float position1_y, float halfSize1_x, float halfSize1_y, float position2_x, float position2_y, float halfSize2_x, float halfSize2_y)
+	{
+		return position1_x + halfSize1_x > position2_x - halfSize2_x && position1_x - halfSize1_x < position2_x + halfSize2_x &&
+			position1_y + halfSize1_y > position2_y - halfSize2_y && position1_y + halfSize1_y < position2_y + halfSize2_y;
+	}
 };
 
 
 class Arena : public Entity
 {
 public:
-	Arena()
+	Arena() // set defaults
 	{
 		color = 0xffaa33;
 		halfSize_x = 85.f;
@@ -50,8 +57,8 @@ class Paddle : public Entity
 public:
 	
 	int score;
-
-	Paddle()
+	 
+	Paddle() // set defaults
 	{
 		color = 0xffffff;
 		halfSize_x = 2.5f;
@@ -86,7 +93,7 @@ class Player : public Paddle
 {
 public:
 
-	Player()
+	Player() // set defaults
 	{
 		position_x = 80.f;
 	}
@@ -97,7 +104,7 @@ class Enemy : public Paddle
 {
 public:
 
-	Enemy()
+	Enemy() // set defaults
 	{
 		position_x = -80.f;
 	}
@@ -112,19 +119,12 @@ class Ball : public Entity
 {
 public:
 
-	Ball()
+	Ball() // set defaults
 	{
 		color = 0xffffff;
 		halfSize_x = 1.f;
 		halfSize_y = 1.f;
 		velocity_x = 100.f;
-	}
-
-	// helper function for collision checks
-	bool aabbVSaabb(float position1_x, float position1_y, float halfSize1_x, float halfSize1_y, float position2_x, float position2_y, float halfSize2_x, float halfSize2_y)
-	{
-		return position1_x + halfSize1_x > position2_x - halfSize2_x && position1_x - halfSize1_x < position2_x + halfSize2_x &&
-			   position1_y + halfSize1_y > position2_y - halfSize2_y && position1_y + halfSize1_y < position2_y + halfSize2_y;
 	}
 
 	void Move(float deltaTime)
@@ -146,14 +146,14 @@ public:
 		}
 
 		// collision check: with arena top/bottom boundaries
-		if (position_y + halfSize_y > arenaHalfSize_y) // arena top
+		if (position_y + halfSize_y > arena.halfSize_y) // arena top
 		{
-			position_y = arenaHalfSize_y - halfSize_y; // reset position to limit
+			position_y = arena.halfSize_y - halfSize_y; // reset position to limit
 			velocity_y *= -1.f; // invert velocity to bounce away
 		}
-		else if (position_y - halfSize_y < -arenaHalfSize_y) // arena bottom
+		else if (position_y - halfSize_y < -arena.halfSize_y) // arena bottom
 		{
-			position_y = -arenaHalfSize_y + halfSize_y; // reset position to limit
+			position_y = -arena.halfSize_y + halfSize_y; // reset position to limit
 			velocity_y *= -1.f; // invert velocity to bounce away
 		}
 
