@@ -1,3 +1,4 @@
+#include "Utilities.h"
 
 static float renderScale = 0.01f;
 
@@ -16,10 +17,10 @@ static void clearScreen(unsigned int color)
 static void drawRectInPixels(int x0, int y0, int x1, int y1, unsigned int color)
 {
 	// don't exceed window
-	x0 = clamp(0, x0, renderState.width);
-	x1 = clamp(0, x1, renderState.width);
-	y0 = clamp(0, y0, renderState.height);
-	y1 = clamp(0, y1, renderState.height);
+	x0 = clampInt(0, x0, renderState.width);
+	x1 = clampInt(0, x1, renderState.width);
+	y0 = clampInt(0, y0, renderState.height);
+	y1 = clampInt(0, y1, renderState.height);
 
 	for (int y = y0; y < y1; y++)
 	{
@@ -51,7 +52,291 @@ static void drawRect(float x, float y, float halfSize_x, float halfSize_y, unsig
 	drawRectInPixels(x0, y0, x1, y1, color);
 }
 
-static void drawNumber(int numValue, float numPosition_x, float numPosition_y, float numSize, unsigned int numColor)
+
+static void drawArenaBoundaries(float arena_x, float arena_y, unsigned int color)
+{
+	arena_x *= renderState.height * renderScale;
+	arena_y *= renderState.height * renderScale;
+
+	int x0 = (int)((float)renderState.width * .5f - arena_x);
+	int x1 = (int)((float)renderState.width * .5f + arena_x);
+	int y0 = (int)((float)renderState.height * .5f - arena_y);
+	int y1 = (int)((float)renderState.height * .5f + arena_y);
+
+	drawRectInPixels(0, 0, renderState.width, y0, color);
+	drawRectInPixels(0, y1, x1, renderState.height, color);
+	drawRectInPixels(0, y0, x0, y1, color);
+	drawRectInPixels(x1, y0, renderState.width, renderState.height, color);
+}
+
+
+const char* letters[][7] = {
+	" 00",
+	"0  0",
+	"0  0",
+	"0000",
+	"0  0",
+	"0  0",
+	"0  0",
+
+	"000",
+	"0  0",
+	"0  0",
+	"000",
+	"0  0",
+	"0  0",
+	"000",
+
+	" 000",
+	"0",
+	"0",
+	"0",
+	"0",
+	"0",
+	" 000",
+
+	"000",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	"000",
+
+	"0000",
+	"0",
+	"0",
+	"000",
+	"0",
+	"0",
+	"0000",
+
+	"0000",
+	"0",
+	"0",
+	"000",
+	"0",
+	"0",
+	"0",
+
+	" 000",
+	"0",
+	"0",
+	"0 00",
+	"0  0",
+	"0  0",
+	" 000",
+
+	"0  0",
+	"0  0",
+	"0  0",
+	"0000",
+	"0  0",
+	"0  0",
+	"0  0",
+
+	"000",
+	" 0",
+	" 0",
+	" 0",
+	" 0",
+	" 0",
+	"000",
+
+	" 000",
+	"   0",
+	"   0",
+	"   0",
+	"0  0",
+	"0  0",
+	" 000",
+
+	"0  0",
+	"0  0",
+	"0 0",
+	"00",
+	"0 0",
+	"0  0",
+	"0  0",
+
+	"0",
+	"0",
+	"0",
+	"0",
+	"0",
+	"0",
+	"0000",
+
+	"00 00",
+	"0 0 0",
+	"0 0 0",
+	"0   0",
+	"0   0",
+	"0   0",
+	"0   0",
+
+	"00  0",
+	"0 0 0",
+	"0 0 0",
+	"0 0 0",
+	"0 0 0",
+	"0 0 0",
+	"0  00",
+
+	"0000",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0000",
+
+	" 000",
+	"0  0",
+	"0  0",
+	"000",
+	"0",
+	"0",
+	"0",
+
+	" 000 ",
+	"0   0",
+	"0   0",
+	"0   0",
+	"0 0 0",
+	"0  0 ",
+	" 00 0",
+
+	"000",
+	"0  0",
+	"0  0",
+	"000",
+	"0  0",
+	"0  0",
+	"0  0",
+
+	" 000",
+	"0",
+	"0 ",
+	" 00",
+	"   0",
+	"   0",
+	"000 ",
+
+	"000",
+	" 0",
+	" 0",
+	" 0",
+	" 0",
+	" 0",
+	" 0",
+
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	"0  0",
+	" 00",
+
+	"0   0",
+	"0   0",
+	"0   0",
+	"0   0",
+	"0   0",
+	" 0 0",
+	"  0",
+
+	"0   0 ",
+	"0   0",
+	"0   0",
+	"0 0 0",
+	"0 0 0",
+	"0 0 0",
+	" 0 0 ",
+
+	"0   0",
+	"0   0",
+	" 0 0",
+	"  0",
+	" 0 0",
+	"0   0",
+	"0   0",
+
+	"0   0",
+	"0   0",
+	" 0 0",
+	"  0",
+	"  0",
+	"  0",
+	"  0",
+
+	"0000",
+	"   0",
+	"  0",
+	" 0",
+	"0",
+	"0",
+	"0000",
+
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"0",
+
+	"   0",
+	"  0",
+	"  0",
+	" 0",
+	" 0",
+	"0",
+	"0",
+};
+
+static void drawRectText(const char* textContent, float position_x, float position_y, float textSize, unsigned int textColor) 
+{
+	float halfSize = textSize * .5f;
+	float original_y = position_y;
+
+	while (*textContent) 
+	{
+		if (*textContent != 32) 
+		{
+			const char** letter;
+			if (*textContent == 47) letter = letters[27];
+			else if (*textContent == 46) letter = letters[26];
+			else letter = letters[*textContent - 'A'];
+			float original_x = position_x;
+
+			for (int i = 0; i < 7; i++) 
+			{
+				const char* row = letter[i];
+				if (row != NULL)
+				{
+					while (*row)
+					{
+						if (*row == '0')
+						{ drawRect(position_x, position_y, halfSize, halfSize, textColor); }
+						position_x += textSize;
+						row++;
+					}
+				}
+
+				position_y -= textSize;
+				position_x = original_x;
+			}
+		}
+		textContent++;
+		position_x += textSize * 6.f;
+		position_y = original_y;
+	}
+}
+
+
+static void drawRectNumber(int numValue, float numPosition_x, float numPosition_y, float numSize, unsigned int numColor)
 {
 	float numHalfSize = numSize * .5f;
 

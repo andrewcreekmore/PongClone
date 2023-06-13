@@ -5,6 +5,13 @@
 #define released(key) (!input->keyState[key].bIsDown && input->keyState[key].bHasChanged)
 
 
+enum gameMode
+{
+	MENU,
+	GAMEPLAY,
+};
+
+
 enum arenaCollision
 {
 	NO_COLLISION,
@@ -14,6 +21,12 @@ enum arenaCollision
 	RIGHT_COLLISION
 };
 
+
+bool bRoundActive = true;
+gameMode currentGameMode;
+int activeMenuButton;
+bool bActiveEnemyAI;
+HWND parentWindow;
 
 class Entity
 {
@@ -70,6 +83,9 @@ public:
 
 	// returns whether/how this entity collides with the boundaries of the arena
 	virtual arenaCollision checkForArenaBoundaryCollision() override;
+
+	// for enemy AI paddle: determine next movement
+	void decideNextMove();
 };
 
 

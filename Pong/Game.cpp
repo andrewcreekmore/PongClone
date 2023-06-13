@@ -1,4 +1,7 @@
 #include "Game.h"
+#include <windows.h>
+#include "Utilities.h"
+
 
 // construct game entities
 Arena arena;
@@ -11,7 +14,7 @@ Ball ball;
 bool Entity::aabbVSaabb(Entity other)
 {
 	return position_x + halfSize_x > other.position_x - other.halfSize_x && position_x - halfSize_x < other.position_x + other.halfSize_x &&
-		   position_y + halfSize_y > other.position_y - other.halfSize_y && position_y + halfSize_y < other.position_y + other.halfSize_y;
+	   position_y + halfSize_y > other.position_y - other.halfSize_y && position_y + halfSize_y < other.position_y + other.halfSize_y;
 }
 
 
@@ -47,6 +50,19 @@ arenaCollision Ball::checkForArenaBoundaryCollision()
 }
 
 
+// for enemy AI paddle: determine next movement
+void Paddle::decideNextMove()
+{
+	float calculatedAcceleration = (ball.position_y - position_y) * 100;
+
+	// when calculatedAcceleration is low (i.e., what's necessary to keep ball in play)... 
+	if (calculatedAcceleration > -100.f && calculatedAcceleration < 100.f) 
+	{ calculatedAcceleration += 1000; } // ...introduce additional movement to try and 'hit ball past player'
+
+	acceleration = clampFloat(-1200, calculatedAcceleration, 1200);
+}
+
+
 // moves the paddle entity within the arena
 void Paddle::move(float deltaTime)
 {
@@ -79,6 +95,8 @@ void Paddle::move(float deltaTime)
 // moves the ball entity within the arena
 void Ball::move(float deltaTime)
 {
+	if (!bRoundActive) { return; }
+
 	// collision check: with player
 	if (aabbVSaabb(player))
 	{
@@ -120,7 +138,12 @@ void Ball::move(float deltaTime)
 		position_y = 0.f; // reset position to center of arena
 
 		// PLAYER SCORES POINT
-		player.score++;
+		if (bRoundActive)
+		{
+			player.score++;
+			bRoundActive = false;
+		}
+
 		break;
 
 	case RIGHT_COLLISION:
@@ -130,7 +153,12 @@ void Ball::move(float deltaTime)
 		position_y = 0.f; // reset position to center of arena
 
 		// ENEMY AI SCORES POINT
-		enemy.score++;
+		if (bRoundActive)
+		{
+			enemy.score++;
+			bRoundActive = false;
+		}
+
 		break;
 	}
 
@@ -146,13 +174,24 @@ void handleInput(Input* input, float deltaTime)
 	player.acceleration = 0.f; // reset
 	if (isDown(KEY_UP)) { player.acceleration += 1500; }
 	if (isDown(KEY_DOWN)) { player.acceleration -= 1500; }
+	if (bActiveEnemyAI) // allow use of W/S keys when only controlling player
+	{
+		if (isDown(KEY_W)) { player.acceleration += 1500; }
+		if (isDown(KEY_S)) { player.acceleration -= 1500; }
+	}
 	player.move(deltaTime);
 
-	// TEMPORARY, PLAYER CONTROLLING BOTH SIDES
 	// handle opponent enemy AI (left paddle) movement
 	enemy.acceleration = 0.f; // reset
-	if (isDown(KEY_W)) { enemy.acceleration += 1500; }
-	if (isDown(KEY_S)) { enemy.acceleration -= 1500; }
+	if (!bActiveEnemyAI)
+	{
+		if (isDown(KEY_W)) { enemy.acceleration += 1500; }
+		if (isDown(KEY_S)) { enemy.acceleration -= 1500; }
+	}
+
+	else // use enemy AI to control movement
+	{ enemy.decideNextMove(); }
+
 	enemy.move(deltaTime);
 }
 
@@ -161,21 +200,64 @@ static void simulateGame(Input* input, float deltaTime)
 {
 	clearScreen(0x000000);
 	
-	// render arena boundaries
+	// render arena
 	drawRect(0, 0, arena.halfSize_x, arena.halfSize_y, arena.color);
+	drawArenaBoundaries(arena.halfSize_x, arena.halfSize_y, 0xffffff);
 
-	// handle player (right paddle) movement input
-	handleInput(input, deltaTime);
+	if (pressed(KEY_ESC)) // show exit prompt
+	{ PostMessage(parentWindow, WM_CLOSE, 0, 0); }
 
-	// handle ball movement
-	ball.move(deltaTime);
+	if (currentGameMode == GAMEPLAY)
+	{
+		// handle player (right paddle) movement input
+		handleInput(input, deltaTime);
 
-	// render player / enemy AI scores
-	drawNumber(player.score, -15.f, 40.f, 1.f, 0xbbffbb);
-	drawNumber(enemy.score, 15.f, 40.f, 1.f, 0xbbffbb);
+		// handle ball movement
+		if (bRoundActive)
+		{ ball.move(deltaTime); }
+		
+		else // reset after scored points
+		{
+			enemy.position_y = 0.f;
+			player.position_y = 0.f;
+			bRoundActive = true;
+		}
 
-	// render ball and player + enemy AI paddles
-	drawRect(ball.position_x, ball.position_y, ball.halfSize_x, ball.halfSize_y, ball.color);
-	drawRect(enemy.position_x, enemy.position_y, enemy.halfSize_x, enemy.halfSize_y, enemy.color);
-	drawRect(player.position_x, player.position_y, player.halfSize_x, player.halfSize_y, player.color);
+		// render player / enemy AI scores
+		drawRectNumber(enemy.score, -15.f, 40.f, 1.f, 0xbbffbb);
+		drawRectNumber(player.score, 15.f, 40.f, 1.f, 0xbbffbb);
+
+		// render ball and player + enemy AI paddles
+		drawRect(ball.position_x, ball.position_y, ball.halfSize_x, ball.halfSize_y, ball.color);
+		drawRect(enemy.position_x, enemy.position_y, enemy.halfSize_x, enemy.halfSize_y, enemy.color);
+		drawRect(player.position_x, player.position_y, player.halfSize_x, player.halfSize_y, player.color);
+	}
+
+	else // menu
+	{
+		if (pressed(KEY_A) || pressed (KEY_D)) // choose game mode
+		{ activeMenuButton = !activeMenuButton; }
+
+		if (pressed(KEY_ENTER) || pressed(KEY_SPACE)) // select chosen button
+		{
+			currentGameMode = GAMEPLAY;
+			bActiveEnemyAI = activeMenuButton ? false : true;
+		}
+
+		drawRectText("PONG", -30, 35, 3, 0xcccccc);
+		drawRectText("BY ANDREW CREEKMORE", -53, 12, 1, 0xcccccc);
+
+		if (activeMenuButton == 0) // single-player (play against enemy AI)
+		{
+			drawRectText("SINGLE PLAYER", -80, -15, 1, 0xff0000);
+			drawRect(-65, -25, 15, 1, 0xff0000);
+			drawRectText("MULTIPLAYER", 15, -15, 1, 0xcccccc);
+		}
+		else // multi-player (control both paddles)
+		{
+			drawRectText("SINGLE PLAYER", -80, -15, 1, 0xcccccc);
+			drawRectText("MULTIPLAYER", 15, -15, 1, 0xff0000);
+			drawRect(30, -25, 15, 1, 0xff0000);
+		}
+	}
 }

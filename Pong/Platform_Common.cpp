@@ -15,6 +15,9 @@ enum
 	KEY_S,
 	KEY_A,
 	KEY_D,
+	KEY_ENTER,
+	KEY_SPACE,
+	KEY_ESC,
 
 	KEY_COUNT, // count of num of keys; should be last element
 };

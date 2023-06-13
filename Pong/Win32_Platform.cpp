@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "Win32_Platform.h"
 #include "Platform_Common.cpp"
-#include "Utilities.cpp"
+#include "Utilities.h"
 #include "Renderer.cpp"
 #include "Game.cpp"
 
@@ -13,8 +13,21 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg) 
 	{
 		case WM_CLOSE:
+		{
+			bRoundActive = false;
+			ShowCursor(true);
+
+			if (MessageBox(hwnd, "Really quit?", "Pong", MB_OKCANCEL) == IDOK)
+			{ DestroyWindow(hwnd); }
+	
+			bRoundActive = true;
+			ShowCursor(false);
+		}
+		break;
+
 		case WM_DESTROY:
 		{ bGameRunning = false; }
+		PostQuitMessage(0);
 		break;
 
 		case WM_SIZE: 
@@ -50,6 +63,8 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	ShowCursor(false); // hide cursor inside window
+
 	// create Game Window class
 	WNDCLASS GameWindowClass = {};
 	GameWindowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -60,7 +75,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	RegisterClass(&GameWindowClass);
 
 	// create Game Window
-	HWND gameWindow = CreateWindow(GameWindowClass.lpszClassName, "Pong", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
+	HWND gameWindow = CreateWindow(GameWindowClass.lpszClassName, "Pong by Andrew Creekmore", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
+	parentWindow = gameWindow;
+	{
+		// make game window full-screen
+		SetWindowLong(gameWindow, GWL_STYLE, GetWindowLong(gameWindow, GWL_STYLE) & ~WS_OVERLAPPEDWINDOW);
+		MONITORINFO monitorInfo = { sizeof(monitorInfo) };
+		GetMonitorInfo(MonitorFromWindow(gameWindow, MONITOR_DEFAULTTOPRIMARY), &monitorInfo);
+		SetWindowPos(gameWindow, HWND_TOP, monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top, monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	}
 	HDC hdc = GetDC(gameWindow); // device context
 
 	// create input struct
@@ -122,6 +145,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 						processKey(KEY_S, 'S');
 						processKey(KEY_A, 'A');
 						processKey(KEY_D, 'D');
+						processKey(KEY_ENTER, VK_RETURN);
+						processKey(KEY_SPACE, VK_SPACE);
+						processKey(KEY_ESC, VK_ESCAPE);
 					}
 				}
 				break;
@@ -133,7 +159,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		}
 
 		// simulate
-		simulateGame(&input, deltaTime);
+		simulateGame(&input, deltaTime);;
 
 		// render
 		StretchDIBits(hdc, 0, 0, renderState.width, renderState.height, 0, 0, renderState.width, renderState.height, renderState.memory, &renderState.bitmapInfo, DIB_RGB_COLORS, SRCCOPY);
