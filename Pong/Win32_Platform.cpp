@@ -82,8 +82,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		performanceFrequency = (float)performance.QuadPart;
 	}
 
-	//
-
 	// GAME LOOP
 	while (bGameRunning)
 	{
