@@ -14,14 +14,19 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		case WM_CLOSE:
 		{
-			bRoundActive = false;
 			ShowCursor(true);
+			int response = MessageBox(hwnd, "Really quit?", "Pong", MB_OKCANCEL);
 
-			if (MessageBox(hwnd, "Really quit?", "Pong", MB_OKCANCEL) == IDOK)
+			if (response == IDOK)
 			{ DestroyWindow(hwnd); }
-	
-			bRoundActive = true;
-			ShowCursor(false);
+
+			else // reset round
+			{ 
+				ShowCursor(false); 
+				ball.reset();
+			 	player.reset();
+				enemy.reset();
+			}
 		}
 		break;
 

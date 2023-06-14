@@ -14,7 +14,7 @@ Ball ball;
 bool Entity::aabbVSaabb(Entity other)
 {
 	return position_x + halfSize_x > other.position_x - other.halfSize_x && position_x - halfSize_x < other.position_x + other.halfSize_x &&
-	   position_y + halfSize_y > other.position_y - other.halfSize_y && position_y + halfSize_y < other.position_y + other.halfSize_y;
+		   position_y + halfSize_y > other.position_y - other.halfSize_y && position_y + halfSize_y < other.position_y + other.halfSize_y;
 }
 
 
@@ -53,13 +53,39 @@ arenaCollision Ball::checkForArenaBoundaryCollision()
 // for enemy AI paddle: determine next movement
 void Paddle::decideNextMove()
 {
-	float calculatedAcceleration = (ball.position_y - position_y) * 100;
+	// move much slower when ball is moving away vs coming at paddle
+	float speedMultiplier = ball.velocity_x > 0 ? 30 : 85;
 
-	// when calculatedAcceleration is low (i.e., what's necessary to keep ball in play)... 
-	if (calculatedAcceleration > -100.f && calculatedAcceleration < 100.f) 
-	{ calculatedAcceleration += 1000; } // ...introduce additional movement to try and 'hit ball past player'
+	// determine acceleration needed (direction, magnitude)
+	float calculatedAcceleration = (ball.position_y - position_y) * speedMultiplier;
 
-	acceleration = clampFloat(-1200, calculatedAcceleration, 1200);
+	// if don't have to move to keep ball in play 
+	if (calculatedAcceleration <= 100.f && calculatedAcceleration >= -100.f)
+	{ 
+		if (ball.position_x < -25) // if close enough
+		{
+			// introduce additional movement to try and break stalemate bounce
+			if (bLastMoveWasUp)
+			{
+				acceleration += 800.f;
+				bLastMoveWasUp = true;
+			}
+			else
+			{
+				acceleration -= 800.f;
+				bLastMoveWasUp = false;
+			}
+		}
+	}
+
+	else
+	{
+		// track last move direction to reduce jitter/rapid direction-swapping
+		bLastMoveWasUp = calculatedAcceleration > 0 ? true : false;
+
+		// process the acceleration for next move() call
+		acceleration = clampFloat(-1200, calculatedAcceleration, 1200);
+	}
 }
 
 
@@ -92,11 +118,17 @@ void Paddle::move(float deltaTime)
 }
 
 
+// sets back to round starting position
+void Paddle::reset()
+{
+	position_x = initialPosition_x;
+	position_y = 0.f;
+}
+
+
 // moves the ball entity within the arena
 void Ball::move(float deltaTime)
 {
-	if (!bRoundActive) { return; }
-
 	// collision check: with player
 	if (aabbVSaabb(player))
 	{
@@ -132,14 +164,10 @@ void Ball::move(float deltaTime)
 		break;
 
 	case LEFT_COLLISION:
-		velocity_x *= -1.f; // invert horizontal velocity
-		velocity_y = 0.f; // reset vertical velocity
-		position_x = 0.f;
-		position_y = 0.f; // reset position to center of arena
-
 		// PLAYER SCORES POINT
 		if (bRoundActive)
 		{
+			reset();
 			player.score++;
 			bRoundActive = false;
 		}
@@ -147,14 +175,10 @@ void Ball::move(float deltaTime)
 		break;
 
 	case RIGHT_COLLISION:
-		velocity_x *= -1.f; // invert horizontal velocity
-		velocity_y = 0.f; // reset vertical velocity
-		position_x = 0.f;
-		position_y = 0.f; // reset position to center of arena
-
 		// ENEMY AI SCORES POINT
 		if (bRoundActive)
 		{
+			reset(); // move back to starting position and reset velocity
 			enemy.score++;
 			bRoundActive = false;
 		}
@@ -163,8 +187,22 @@ void Ball::move(float deltaTime)
 	}
 
 	// movement
-	position_x += velocity_x * deltaTime;
-	position_y += velocity_y * deltaTime;
+	if (bRoundActive)
+	{
+		position_x += velocity_x * deltaTime;
+		position_y += velocity_y * deltaTime;
+	}
+}
+
+
+// resets position and velocity of ball
+void Ball::reset()
+{
+	position_x = 0.f;
+	position_y = 0.f;
+	velocity_y = 0.f;
+	// always reset to be coming at AI, not player, at round start
+	velocity_x = -100.f;
 }
 
 
@@ -205,7 +243,10 @@ static void simulateGame(Input* input, float deltaTime)
 	drawArenaBoundaries(arena.halfSize_x, arena.halfSize_y, 0xffffff);
 
 	if (pressed(KEY_ESC)) // show exit prompt
-	{ PostMessage(parentWindow, WM_CLOSE, 0, 0); }
+	{ 
+		bRoundActive = false;
+		PostMessage(parentWindow, WM_CLOSE, 0, 0);
+	}
 
 	if (currentGameMode == GAMEPLAY)
 	{
@@ -215,11 +256,12 @@ static void simulateGame(Input* input, float deltaTime)
 		// handle ball movement
 		if (bRoundActive)
 		{ ball.move(deltaTime); }
-		
-		else // reset after scored points
+			
+		else // reset after scored points or pause
 		{
-			enemy.position_y = 0.f;
-			player.position_y = 0.f;
+			ball.reset();
+			player.reset();
+			enemy.reset();
 			bRoundActive = true;
 		}
 
