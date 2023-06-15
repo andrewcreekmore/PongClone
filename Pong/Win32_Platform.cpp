@@ -20,12 +20,10 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (response == IDOK)
 			{ DestroyWindow(hwnd); }
 
-			else // reset round
+			else // resume
 			{ 
+				bGamePaused = false;
 				ShowCursor(false); 
-				ball.reset();
-			 	player.reset();
-				enemy.reset();
 			}
 		}
 		break;

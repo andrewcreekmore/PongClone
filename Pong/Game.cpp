@@ -1,6 +1,8 @@
 #include "Game.h"
 #include <windows.h>
 #include "Utilities.h"
+#include <chrono>
+#include <thread>
 
 
 // construct game entities
@@ -14,7 +16,7 @@ Ball ball;
 bool Entity::aabbVSaabb(Entity other)
 {
 	return position_x + halfSize_x > other.position_x - other.halfSize_x && position_x - halfSize_x < other.position_x + other.halfSize_x &&
-		   position_y + halfSize_y > other.position_y - other.halfSize_y && position_y + halfSize_y < other.position_y + other.halfSize_y;
+	position_y + halfSize_y > other.position_y - other.halfSize_y && position_y + halfSize_y < other.position_y + other.halfSize_y;
 }
 
 
@@ -54,7 +56,7 @@ arenaCollision Ball::checkForArenaBoundaryCollision()
 void Paddle::decideNextMove()
 {
 	// move much slower when ball is moving away vs coming at paddle
-	float speedMultiplier = ball.velocity_x > 0 ? 30 : 85;
+	float speedMultiplier = ball.velocity_x > 0.f ? 30.f : 85.f;
 
 	// determine acceleration needed (direction, magnitude)
 	float calculatedAcceleration = (ball.position_y - position_y) * speedMultiplier;
@@ -62,7 +64,7 @@ void Paddle::decideNextMove()
 	// if don't have to move to keep ball in play 
 	if (calculatedAcceleration <= 100.f && calculatedAcceleration >= -100.f)
 	{ 
-		if (ball.position_x < -25) // if close enough
+		if (ball.position_x < -25.f) // if close enough
 		{
 			// introduce additional movement to try and break stalemate bounce
 			if (bLastMoveWasUp)
@@ -81,10 +83,10 @@ void Paddle::decideNextMove()
 	else
 	{
 		// track last move direction to reduce jitter/rapid direction-swapping
-		bLastMoveWasUp = calculatedAcceleration > 0 ? true : false;
+		bLastMoveWasUp = calculatedAcceleration > 0.f ? true : false;
 
 		// process the acceleration for next move() call
-		acceleration = clampFloat(-1200, calculatedAcceleration, 1200);
+		acceleration = clampFloat(-1200.f, calculatedAcceleration, 1200.f);
 	}
 }
 
@@ -118,7 +120,7 @@ void Paddle::move(float deltaTime)
 }
 
 
-// sets back to round starting position
+// resets paddle back to round starting position
 void Paddle::reset()
 {
 	position_x = initialPosition_x;
@@ -164,34 +166,25 @@ void Ball::move(float deltaTime)
 		break;
 
 	case LEFT_COLLISION:
-		// PLAYER SCORES POINT
-		if (bRoundActive)
-		{
-			reset();
-			player.score++;
-			bRoundActive = false;
-		}
-
+		player.score++; // PLAYER SCORES POINT
 		break;
 
 	case RIGHT_COLLISION:
-		// ENEMY AI SCORES POINT
-		if (bRoundActive)
-		{
-			reset(); // move back to starting position and reset velocity
-			enemy.score++;
-			bRoundActive = false;
-		}
-
+		enemy.score++; // ENEMY AI (or "player2" in multi-player mode) SCORES POINT
 		break;
 	}
 
-	// movement
-	if (bRoundActive)
+	// if either paddle scored a point
+	if (result == LEFT_COLLISION || result == RIGHT_COLLISION)
 	{
-		position_x += velocity_x * deltaTime;
-		position_y += velocity_y * deltaTime;
+		// reset positions, brief pause, resume
+		std::thread setupNextRoundThread(setupNextRound);
+		setupNextRoundThread.detach();
 	}
+
+	// movement
+	position_x += velocity_x * deltaTime;
+	position_y += velocity_y * deltaTime;
 }
 
 
@@ -201,8 +194,8 @@ void Ball::reset()
 	position_x = 0.f;
 	position_y = 0.f;
 	velocity_y = 0.f;
-	// always reset to be coming at AI, not player, at round start
-	velocity_x = -100.f;
+	velocity_x *= -1.f; // invert horizontal velocity
+	velocity_x = clampFloat(-100.f, velocity_x, 100.f); // reset to starting speed
 }
 
 
@@ -217,23 +210,73 @@ void handleInput(Input* input, float deltaTime)
 		if (isDown(KEY_W)) { player.acceleration += 1500; }
 		if (isDown(KEY_S)) { player.acceleration -= 1500; }
 	}
-	player.move(deltaTime);
 
-	// handle opponent enemy AI (left paddle) movement
+	// handle opponent / player2 (left paddle) movement input
 	enemy.acceleration = 0.f; // reset
 	if (!bActiveEnemyAI)
 	{
 		if (isDown(KEY_W)) { enemy.acceleration += 1500; }
 		if (isDown(KEY_S)) { enemy.acceleration -= 1500; }
 	}
-
-	else // use enemy AI to control movement
-	{ enemy.decideNextMove(); }
-
-	enemy.move(deltaTime);
 }
 
 
+// resets paddle/ball and resumes after 1s delay
+void setupNextRound()
+{
+	bRoundActive = false;
+	ball.reset();
+	player.reset();
+	enemy.reset();
+
+	delay(1);
+	bRoundActive = true;
+}
+
+
+// flags round as inactive while paused
+void pauseRound()
+{
+	bRoundActive = false;
+
+	while (bGamePaused)
+	{ delay(1); }
+
+	bRoundActive = true;
+}
+
+
+// handles ball/paddle movement + AI
+static void simulateRound(float deltaTime)
+{
+	if (bRoundActive)
+	{ 
+		ball.move(deltaTime); 
+		player.move(deltaTime);
+
+		if (bActiveEnemyAI)
+		{ enemy.decideNextMove(); }
+
+		enemy.move(deltaTime);
+	}
+}
+
+
+// draws elements of current round to screen
+static void renderRound()
+{
+	// render player / enemy AI scores
+	drawRectNumber(enemy.score, -15.f, 40.f, 1.f, 0xbbffbb);
+	drawRectNumber(player.score, 15.f, 40.f, 1.f, 0xbbffbb);
+
+	// render ball and player + enemy AI paddles
+	drawRect(ball.position_x, ball.position_y, ball.halfSize_x, ball.halfSize_y, ball.color);
+	drawRect(enemy.position_x, enemy.position_y, enemy.halfSize_x, enemy.halfSize_y, enemy.color);
+	drawRect(player.position_x, player.position_y, player.halfSize_x, player.halfSize_y, player.color);
+}
+
+
+// handles overall game process
 static void simulateGame(Input* input, float deltaTime)
 {
 	clearScreen(0x000000);
@@ -245,7 +288,12 @@ static void simulateGame(Input* input, float deltaTime)
 	if (pressed(KEY_ESC)) // show exit prompt
 	{ 
 		bRoundActive = false;
-		PostMessage(parentWindow, WM_CLOSE, 0, 0);
+		bGamePaused = true;
+		PostMessage(parentWindow, WM_CLOSE, 0, 0); // send "Really quit?" message box
+		
+		// pause round
+		std::thread pauseThread(pauseRound);
+		pauseThread.detach();
 	}
 
 	if (currentGameMode == GAMEPLAY)
@@ -253,26 +301,11 @@ static void simulateGame(Input* input, float deltaTime)
 		// handle player (right paddle) movement input
 		handleInput(input, deltaTime);
 
-		// handle ball movement
-		if (bRoundActive)
-		{ ball.move(deltaTime); }
-			
-		else // reset after scored points or pause
-		{
-			ball.reset();
-			player.reset();
-			enemy.reset();
-			bRoundActive = true;
-		}
+		// simulate round entities
+		simulateRound(deltaTime);
 
-		// render player / enemy AI scores
-		drawRectNumber(enemy.score, -15.f, 40.f, 1.f, 0xbbffbb);
-		drawRectNumber(player.score, 15.f, 40.f, 1.f, 0xbbffbb);
-
-		// render ball and player + enemy AI paddles
-		drawRect(ball.position_x, ball.position_y, ball.halfSize_x, ball.halfSize_y, ball.color);
-		drawRect(enemy.position_x, enemy.position_y, enemy.halfSize_x, enemy.halfSize_y, enemy.color);
-		drawRect(player.position_x, player.position_y, player.halfSize_x, player.halfSize_y, player.color);
+		// draw round entities to screen
+		renderRound();
 	}
 
 	else // menu

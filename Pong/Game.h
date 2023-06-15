@@ -85,7 +85,7 @@ public:
 	// moves the paddle's position within the arena
 	void move(float deltaTime);
 
-	//
+	// resets paddle back to round starting position
 	void reset();
 
 	// returns whether/how this entity collides with the boundaries of the arena
@@ -113,7 +113,9 @@ public:
 	// returns whether/how this entity collides with the boundaries of the arena
 	virtual arenaCollision checkForArenaBoundaryCollision() override;
 
-	//
+	// resets position and velocity of ball
 	void reset();
 };
 
+void setupNextRound();
+void pauseRound();
