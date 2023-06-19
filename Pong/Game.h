@@ -7,8 +7,9 @@
 
 enum gameMode
 {
-	MENU,
-	GAMEPLAY,
+	GM_MAINMENU,
+	GM_GAMEPLAY,
+	GM_PAUSEMENU,
 };
 
 
@@ -23,9 +24,12 @@ enum arenaCollision
 
 
 bool bRoundActive = true;
-gameMode currentGameMode = MENU;
-int activeMenuButton;
+gameMode currentGameMode = GM_MAINMENU;
+int activeMainMenuButton;
+int activePauseMenuButton;
 bool bActiveEnemyAI;
+bool bHideBall = false;
+bool bHideScore = false;
 HWND parentWindow;
 
 class Entity
@@ -119,3 +123,5 @@ public:
 
 void setupNextRound();
 void pauseRound();
+void startNewGame();
+void drawPauseMenu(int highlightedButton);
