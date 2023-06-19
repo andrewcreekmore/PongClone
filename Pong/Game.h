@@ -123,5 +123,6 @@ public:
 
 void setupNextRound();
 void pauseRound();
-void startNewGame();
-void drawPauseMenu(int highlightedButton);
+void startNewGame(bool activeAI);
+void drawMainMenu(int activeButton);
+void drawPauseMenu(int activeButton);

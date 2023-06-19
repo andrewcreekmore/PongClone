@@ -222,10 +222,10 @@ void handleInput(Input* input, float deltaTime)
 
 
 // for use from main or pause menus; starts fresh game
-void startNewGame()
+void startNewGame(bool activeAI)
 {
 	currentGameMode = GM_GAMEPLAY;
-	bActiveEnemyAI = activeMainMenuButton ? false : true;
+	bActiveEnemyAI = activeAI;
 
 	ball.reset();
 	player.reset();
@@ -245,7 +245,7 @@ void setupNextRound()
 	player.reset();
 	enemy.reset();
 
-	delay(1.5);
+	delay(1);
 	if (!bGamePaused) // don't begin if game was paused during delay
 	{ bRoundActive = true; }
 }
@@ -302,8 +302,28 @@ static void renderRound()
 }
 
 
+// renders main menu
+void drawMainMenu(int activeButton)
+{
+	float position_x = -30.f;
+	float mainMenu_SinglePlayerPosition_y = -15.f;
+	float mainMenu_MultiPlayerPosition_y = -23.f;
+	float mainMenu_ExitPosition_y = -31.f;
+	float highlightedSize = .85f;
+	float defaultSize = .75f;
+
+	drawRectText("C++ PONG", -68, 35, 3, 0xffffff);
+	drawRectText("BY ANDREW CREEKMORE", -53, 12, 1, 0xcccccc);
+	
+	// vertical menu spacing
+	drawRectText("SINGLE PLAYER", position_x, mainMenu_SinglePlayerPosition_y, (activeButton == 0 ? highlightedSize : defaultSize), (activeButton == 0 ? 0xff0000 : 0xffffff));
+	drawRectText("MULTIPLAYER", position_x, mainMenu_MultiPlayerPosition_y, (activeButton == 1 ? highlightedSize : defaultSize), (activeButton == 1 ? 0xff0000 : 0xffffff));
+	drawRectText("EXIT", position_x, mainMenu_ExitPosition_y, (activeButton == 2 ? highlightedSize : defaultSize), (activeButton == 2 ? 0xff0000 : 0xffffff));
+}
+
+
 // renders pause menu overlay
-void drawPauseMenu(int highlightedButton)
+void drawPauseMenu(int activeButton)
 {
 	float position_x = -20.f;
 	float pauseMenu_ResumePosition_y = 18.f;
@@ -321,10 +341,10 @@ void drawPauseMenu(int highlightedButton)
 	// draw overlay + menu options
 	drawRect(0.f, 3.f, 28.f, 22.f, 0xffffff);
 	drawRect(0.f, 3.f, 27.f, 21.f, arena.color);
-	drawRectText("RESUME", position_x, pauseMenu_ResumePosition_y, (highlightedButton == 0 ? highlightedSize : defaultSize), (highlightedButton == 0 ? highlightedColor : defaultColor));
-	drawRectText("NEW GAME", position_x, pauseMenu_NewGamePosition_y, (highlightedButton == 1 ? highlightedSize : defaultSize), (highlightedButton == 1 ? highlightedColor : defaultColor));
-	drawRectText("MAIN MENU", position_x, pauseMenu_MainMenuPosition_y, (highlightedButton == 2 ? highlightedSize : defaultSize), (highlightedButton == 2 ? highlightedColor : defaultColor));
-	drawRectText("EXIT", position_x, pauseMenu_ExitPosition_y, (highlightedButton == 3 ? highlightedSize : defaultSize), (highlightedButton == 3 ? highlightedColor : defaultColor));
+	drawRectText("RESUME", position_x, pauseMenu_ResumePosition_y, (activeButton == 0 ? highlightedSize : defaultSize), (activeButton == 0 ? highlightedColor : defaultColor));
+	drawRectText("NEW GAME", position_x, pauseMenu_NewGamePosition_y, (activeButton == 1 ? highlightedSize : defaultSize), (activeButton == 1 ? highlightedColor : defaultColor));
+	drawRectText("MAIN MENU", position_x, pauseMenu_MainMenuPosition_y, (activeButton == 2 ? highlightedSize : defaultSize), (activeButton == 2 ? highlightedColor : defaultColor));
+	drawRectText("EXIT", position_x, pauseMenu_ExitPosition_y, (activeButton == 3 ? highlightedSize : defaultSize), (activeButton == 3 ? highlightedColor : defaultColor));
 }
 
 
@@ -363,27 +383,31 @@ static void simulateGame(Input* input, float deltaTime)
 
 	else if (currentGameMode == GM_MAINMENU)
 	{
-		if (pressed(KEY_A) || pressed (KEY_D)) // choose game mode
-		{ activeMainMenuButton = !activeMainMenuButton; }
+		if ((pressed(KEY_W) || pressed (KEY_UP)) && activeMainMenuButton > 0) // choose game mode
+		{ activeMainMenuButton--; }
+
+		if ((pressed(KEY_S) || pressed(KEY_DOWN)) && activeMainMenuButton < 2)
+		{ activeMainMenuButton++; }
 
 		if (pressed(KEY_ENTER) || pressed(KEY_SPACE))
-		{ startNewGame(); }
+		{ 
+			switch (activeMainMenuButton)
+			{
+			case 0: // SINGLE-PLAYER
+				startNewGame(true);
+				break;
 
-		drawRectText("PONG", -30, 35, 3, 0xcccccc);
-		drawRectText("BY ANDREW CREEKMORE", -53, 12, 1, 0xcccccc);
+			case 1: // MULTI-PLAYER
+				startNewGame(false);
+				break;
 
-		if (activeMainMenuButton == 0) // single-player (play against enemy AI)
-		{
-			drawRectText("SINGLE PLAYER", -80, -15, 1, 0xff0000);
-			drawRect(-65, -25, 15, 1, 0xff0000);
-			drawRectText("MULTIPLAYER", 15, -15, 1, 0xcccccc);
+			case 2: // EXIT
+				PostMessage(parentWindow, WM_CLOSE, 0, 0); // send "Really quit?" message box
+				break;
+			}
 		}
-		else // multi-player (control both paddles)
-		{
-			drawRectText("SINGLE PLAYER", -80, -15, 1, 0xcccccc);
-			drawRectText("MULTIPLAYER", 15, -15, 1, 0xff0000);
-			drawRect(30, -25, 15, 1, 0xff0000);
-		}
+
+		drawMainMenu(activeMainMenuButton);
 	}
 
 	else if (currentGameMode == GM_PAUSEMENU)
@@ -405,11 +429,12 @@ static void simulateGame(Input* input, float deltaTime)
 				bGamePaused = false;
 				break;
 
-			case 1: // NEW GAME
-				startNewGame();
+			case 1: // NEW GAME (same mode as current)
+				startNewGame(bActiveEnemyAI);
 				break;
 
 			case 2: // MAIN MENU
+				activeMainMenuButton = 0; // always start at top option (single-player)
 				currentGameMode = GM_MAINMENU;
 				break;
 

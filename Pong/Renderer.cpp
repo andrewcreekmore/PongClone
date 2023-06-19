@@ -281,19 +281,9 @@ const char* letters[][7] = {
 
 	"",
 	"",
-	"",
-	"",
-	"",
-	"",
-	"0",
-
-	"   0",
-	"  0",
-	"  0",
-	" 0",
-	" 0",
-	"0",
-	"0",
+	"  0  ",
+	" 000",
+	"  0  ",
 };
 
 static void drawRectText(const char* textContent, float position_x, float position_y, float textSize, unsigned int textColor) 
@@ -303,12 +293,18 @@ static void drawRectText(const char* textContent, float position_x, float positi
 
 	while (*textContent) 
 	{
-		if (*textContent != 32) 
+		if (*textContent != 32) // empty space
 		{
 			const char** letter;
-			if (*textContent == 47) letter = letters[27];
-			else if (*textContent == 46) letter = letters[26];
-			else letter = letters[*textContent - 'A'];
+
+			// special case:
+			if (*textContent == 43) // + symbol
+			{ letter = letters[26]; }
+
+			// regular cases:
+			else
+			{ letter = letters[*textContent - 'A']; }
+
 			float original_x = position_x;
 
 			for (int i = 0; i < 7; i++) 
@@ -329,6 +325,7 @@ static void drawRectText(const char* textContent, float position_x, float positi
 				position_x = original_x;
 			}
 		}
+
 		textContent++;
 		position_x += textSize * 6.f;
 		position_y = original_y;
