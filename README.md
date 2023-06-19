@@ -1,5 +1,5 @@
 # C++ Pong 
-single-player: control right paddle w/ either W/S or UP/DOWN keys; compete against AI
+single-player: control right paddle w/ either W/S or UP/DOWN keys; compete against AI  
 multi-player: control right paddle w/ UP/DOWN keys while W/S controls left paddle
 
 <p align="center">
