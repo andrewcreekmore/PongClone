@@ -1,4 +1,4 @@
-# Pong 
+# C++ Pong 
 a classic game, written in C++  
 
 <p align="center">
