@@ -1,9 +1,7 @@
-#include "Utilities.h"
-
-static float renderScale = 0.01f;
+#include "Renderer.h"
 
 
-static void clearScreen(unsigned int color)
+void clearScreen(unsigned int color)
 {
 	unsigned int* pixel = (unsigned int*)renderState.memory;
 	for (int y = 0; y < renderState.height; y++)
@@ -14,7 +12,7 @@ static void clearScreen(unsigned int color)
 }
 
 
-static void drawRectInPixels(int x0, int y0, int x1, int y1, unsigned int color)
+void drawRectInPixels(int x0, int y0, int x1, int y1, unsigned int color)
 {
 	// don't exceed window
 	x0 = clampInt(0, x0, renderState.width);
@@ -31,7 +29,7 @@ static void drawRectInPixels(int x0, int y0, int x1, int y1, unsigned int color)
 }
 
 
-static void drawRect(float x, float y, float halfSize_x, float halfSize_y, unsigned int color)
+void drawRect(float x, float y, float halfSize_x, float halfSize_y, unsigned int color)
 {
 	// multiply position and halfSize by window height to make relative to window, regardless of window size
 	x *= renderState.height * renderScale;
@@ -53,7 +51,7 @@ static void drawRect(float x, float y, float halfSize_x, float halfSize_y, unsig
 }
 
 
-static void drawArenaBoundaries(float arena_x, float arena_y, unsigned int color)
+void drawArenaBoundaries(float arena_x, float arena_y, unsigned int color)
 {
 	arena_x *= renderState.height * renderScale;
 	arena_y *= renderState.height * renderScale;
@@ -286,7 +284,7 @@ const char* letters[][7] = {
 	"  0  ",
 };
 
-static void drawRectText(const char* textContent, float position_x, float position_y, float textSize, unsigned int textColor) 
+void drawRectText(const char* textContent, float position_x, float position_y, float textSize, unsigned int textColor) 
 {
 	float halfSize = textSize * .5f;
 	float original_y = position_y;
@@ -333,7 +331,7 @@ static void drawRectText(const char* textContent, float position_x, float positi
 }
 
 
-static void drawRectNumber(int numValue, float numPosition_x, float numPosition_y, float numSize, unsigned int numColor)
+void drawRectNumber(int numValue, float numPosition_x, float numPosition_y, float numSize, unsigned int numColor)
 {
 	float numHalfSize = numSize * .5f;
 

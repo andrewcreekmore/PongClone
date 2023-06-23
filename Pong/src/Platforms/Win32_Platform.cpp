@@ -1,9 +1,11 @@
 #include <windows.h>
 #include "Win32_Platform.h"
-#include "Platform_Common.cpp"
-#include "Utilities.h"
-#include "Renderer.cpp"
-#include "Game.cpp"
+#include "Platform_Common.h"
+#include "../Framework/Audio/SoundBuffer.h"
+#include "../Framework/Audio/SoundSource.h"
+#include "../Framework/Renderer.cpp"
+#include "../Framework/Utilities.h"
+#include "../Game.cpp"
 
 
 LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -22,14 +24,14 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 			else // resume
 			{ 
-				bGamePaused = false;
+				unpauseGame();
 				ShowCursor(false); 
 			}
 		}
 		break;
 
 		case WM_DESTROY:
-		{ bGameRunning = false; }
+		{ bAppRunning = false; }
 		PostQuitMessage(0);
 		break;
 
@@ -108,8 +110,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		performanceFrequency = (float)performance.QuadPart;
 	}
 
-	// GAME LOOP
-	while (bGameRunning)
+	// MAIN LOOP
+	while (bAppRunning)
 	{
 		// input
 		MSG message;
@@ -162,7 +164,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		}
 
 		// simulate
-		simulateGame(&input, deltaTime);;
+		simulateGame(&input, deltaTime, parentWindow);
 
 		// render
 		StretchDIBits(hdc, 0, 0, renderState.width, renderState.height, 0, 0, renderState.width, renderState.height, renderState.memory, &renderState.bitmapInfo, DIB_RGB_COLORS, SRCCOPY);

@@ -1,9 +1,12 @@
+#pragma once
+
 
 struct KeyState
 {
 	bool bIsDown;
 	bool bHasChanged;
 };
+
 
 enum
 {
@@ -22,7 +25,10 @@ enum
 	KEY_COUNT, // count of num of keys; should be last element
 };
 
+
 struct Input
 {
 	KeyState keyState[KEY_COUNT];
 };
+
+

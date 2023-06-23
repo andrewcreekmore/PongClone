@@ -8,6 +8,4 @@ struct RenderState
 };
 
 RenderState renderState;
-
-bool bGameRunning = true;
-bool bGamePaused = false;
+HWND parentWindow;
