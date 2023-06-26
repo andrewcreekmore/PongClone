@@ -1,6 +1,5 @@
 #pragma once
 
-
 struct KeyState
 {
 	bool bIsDown;
@@ -30,5 +29,4 @@ struct Input
 {
 	KeyState keyState[KEY_COUNT];
 };
-
 

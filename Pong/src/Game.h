@@ -1,12 +1,17 @@
 #pragma once
 
 #include <windows.h>
-#include "Framework/Audio/SoundSource.h"
-#include "Framework/Audio/SoundBuffer.h"
+#include "Framework/Audio/SoundDevice.h"
+#include "Framework/Audio/SoundLibrary.h"
+#include "Framework/Audio/SoundPlayer.h"
+#include "Framework/Renderer.h"
+#include "Framework/Utilities.h"
 #include "Entities/Entity.h"
 #include "Entities/Paddle.h"
 #include "Entities/Ball.h"
 #include "Platforms/Platform_Common.h"
+#include <chrono>
+#include <thread>
 
 #define isDown(key) input->keyState[key].bIsDown
 #define pressed(key) (input->keyState[key].bIsDown && input->keyState[key].bHasChanged)
@@ -27,6 +32,7 @@ gameMode currentGameMode = GM_MAINMENU;
 int activeMainMenuButton = 0;
 int activePauseMenuButton = 0;
 bool bActiveEnemyAI;
+SoundPlayer gameSoundPlayers[];
 
 class Arena : public Entity
 {
@@ -40,9 +46,11 @@ public:
 	}
 };
 
-void handleMovementInput(Input* input, float deltaTime);
+void simulateGame(Input* input, float deltaTime, HWND parentWindow);
 
 void simulateRound(float deltaTime);
+
+void handleMovementInput(Input* input, float deltaTime);
 
 void startNewGame(bool activeAI);
 
@@ -52,18 +60,26 @@ void renderRound();
 
 void drawPauseMenu(int activeButton);
 
+void handlePauseMenuInput(Input* input);
+
 void pauseCurrentRound();
 
 void pauseGame();
 
+void unpauseGame();
+
 void drawMainMenu(int activeButton);
+
+void handleMainMenuInput(Input* input);
 
 void handleBallCollision();
 
-void handlePaddleCollision(Paddle paddle);
+void handlePaddleCollision(Paddle &paddle);
 
 void decideNextMoveAI();
 
-void simulateGame(Input* input, float deltaTime, HWND parentWindow);
+void pauseRoundSFX();
 
-inline void unpauseGame() { bGamePaused = false; }
+void resumeRoundSFX();
+
+void stopRoundSFX();

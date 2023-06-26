@@ -31,4 +31,7 @@ public:
 
 	// returns whether/how this entity collides with the boundaries of the arena
 	virtual arenaCollision checkForArenaBoundaryCollision(Entity arena);
+
+	inline float getAudioPosition_x() { return position_x / 8.f; }
+	inline float getAudioPosition_y() { return position_y / 8.f; }
 };

@@ -1,11 +1,44 @@
 #include "SoundDevice.h"
 #include <AL\al.h>
 #include <stdio.h>
+#include "OpenAL_ErrorCheck.h"
+
+
+static SoundDevice* _instance = nullptr;
+
 
 SoundDevice* SoundDevice::get()
 {
-	static SoundDevice* sndDevice = new SoundDevice;
-	return sndDevice;
+	init();
+	return _instance;
+}
+
+
+void SoundDevice::init()
+{
+	if (_instance == nullptr)
+		_instance = new SoundDevice();
+}
+
+
+float SoundDevice::getGain()
+{
+	float currentGain;
+	alGetListenerf(AL_GAIN, &currentGain);
+	AL_CheckAndThrow();
+	return currentGain;
+}
+
+
+// sets the master volume of our listeners, clamped
+void SoundDevice::setGain(const float& val)
+{
+	float newVolume = val;
+	if (newVolume < 0.f) { newVolume = 0.f; }
+	else if (newVolume > 5.f) { newVolume = 5.f; }
+
+	alListenerf(AL_GAIN, newVolume);
+	AL_CheckAndThrow();
 }
 
 
@@ -14,37 +47,27 @@ SoundDevice::SoundDevice()
 	// by passing nullptr, get default device
 	p_ALCDevice = alcOpenDevice(nullptr);
 	if (!p_ALCDevice)
-	{ throw("Failed to get sound device!"); }
+		throw("failed to get sound device");
 
-	// set context
-	p_ALCContext = alcCreateContext(p_ALCDevice, nullptr);
+	p_ALCContext = alcCreateContext(p_ALCDevice, nullptr);  // create context
 	if (!p_ALCContext)
-	{ throw("Failed to set sound context!");}
+		throw("failed to set sound context");
 
-	// make context current
-	if (!alcMakeContextCurrent(p_ALCContext))
-	{ throw("Failed to make context current!"); }
+	if (!alcMakeContextCurrent(p_ALCContext))   // make context current
+		throw("failed to make context current");
 
 	const ALCchar* name = nullptr;
 	if (alcIsExtensionPresent(p_ALCDevice, "ALC_ENUMERATE_ALL_EXT"))
-	{ name = alcGetString(p_ALCDevice, ALC_ALL_DEVICES_SPECIFIER); }
-
+		name = alcGetString(p_ALCDevice, ALC_ALL_DEVICES_SPECIFIER);
 	if (!name || alcGetError(p_ALCDevice) != AL_NO_ERROR)
-	{ name = alcGetString(p_ALCDevice, ALC_DEVICE_SPECIFIER); }
-
-	printf("Opened \" % s\"\n", name);
+		name = alcGetString(p_ALCDevice, ALC_DEVICE_SPECIFIER);
+	printf("opened \"%s\"\n", name);
 }
 
 
 SoundDevice::~SoundDevice()
 {
-	if (!alcMakeContextCurrent(nullptr))
-	{ throw("Failed to set context to nullptr!"); }
-
+	alcMakeContextCurrent(nullptr);
 	alcDestroyContext(p_ALCContext);
-	if (p_ALCContext)
-	{ throw("Failed to unset context during close!"); }
-
-	if (!alcCloseDevice(p_ALCDevice))
-	{ throw("Failed to close sound device!"); }
+	alcCloseDevice(p_ALCDevice);
 }

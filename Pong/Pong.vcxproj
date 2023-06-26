@@ -146,20 +146,21 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\Framework\Audio\SoundBuffer.cpp" />
+    <ClCompile Include="src\Framework\Audio\SoundLibrary.cpp" />
     <ClCompile Include="src\Framework\Audio\SoundDevice.cpp" />
-    <ClCompile Include="src\Framework\Audio\SoundSource.cpp" />
+    <ClCompile Include="src\Framework\Audio\SoundPlayer.cpp" />
     <ClCompile Include="src\Platforms\Win32_Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Entities\Ball.h" />
     <ClInclude Include="src\Entities\Entity.h" />
     <ClInclude Include="src\Entities\Paddle.h" />
+    <ClInclude Include="src\Framework\Audio\OpenAL_ErrorCheck.h" />
     <ClInclude Include="src\Framework\Renderer.h" />
     <ClInclude Include="src\Game.h" />
-    <ClInclude Include="src\Framework\Audio\SoundBuffer.h" />
+    <ClInclude Include="src\Framework\Audio\SoundLibrary.h" />
     <ClInclude Include="src\Framework\Audio\SoundDevice.h" />
-    <ClInclude Include="src\Framework\Audio\SoundSource.h" />
+    <ClInclude Include="src\Framework\Audio\SoundPlayer.h" />
     <ClInclude Include="src\Framework\Utilities.h" />
     <ClInclude Include="src\Platforms\Platform_Common.h" />
     <ClInclude Include="src\Platforms\Win32_Platform.h" />

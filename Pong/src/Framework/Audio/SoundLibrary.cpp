@@ -1,19 +1,19 @@
-#include "SoundBuffer.h"
+#include "SoundLibrary.h"
 #include <sndfile.h>
 #include <inttypes.h>
 #include <AL\alext.h>
 
 
-// singleton getter method
-SoundBuffer* SoundBuffer::get()
+// singleton getter method; returns a pointer to the only instantiation allowed
+SoundLibrary* SoundLibrary::get()
 {
-	static SoundBuffer* sndbuf = new SoundBuffer();
+	static SoundLibrary* sndbuf = new SoundLibrary();
 	return sndbuf;
 }
 
 
-// adds an audio file to the buffer
-ALuint SoundBuffer::addSoundEffect(const char* fileName)
+// loads sound file into memory; returns buffer ID for accessing
+ALuint SoundLibrary::load(const char* fileName)
 {
 	ALenum err, format;
 	ALuint buffer;
@@ -44,18 +44,18 @@ ALuint SoundBuffer::addSoundEffect(const char* fileName)
 	// get the sound format + figure out the OpenAL format
 	format = AL_NONE;
 	if (sfInfo.channels == 1)
-		{ format = AL_FORMAT_MONO16; }
+	{ format = AL_FORMAT_MONO16; }
 	else if (sfInfo.channels == 2)
-		{ format = AL_FORMAT_STEREO16; }
+	{ format = AL_FORMAT_STEREO16; }
 	else if (sfInfo.channels == 3)
 	{
 		if (sf_command(sndFile, SFC_WAVEX_GET_AMBISONIC, NULL, 0) == SF_AMBISONIC_B_FORMAT)
-			{ format = AL_FORMAT_BFORMAT2D_16; }
+		{ format = AL_FORMAT_BFORMAT2D_16; }
 	}
 	else if (sfInfo.channels == 4)
 	{
 		if (sf_command(sndFile, SFC_WAVEX_GET_AMBISONIC, NULL, 0) == SF_AMBISONIC_B_FORMAT)
-			{ format = AL_FORMAT_BFORMAT3D_16; }
+		{ format = AL_FORMAT_BFORMAT3D_16; }
 	}
 	if (!format)
 	{
@@ -90,23 +90,22 @@ ALuint SoundBuffer::addSoundEffect(const char* fileName)
 	if (err != AL_NO_ERROR)
 	{
 		fprintf(stderr, "OpenAL Error: %s\n", alGetString(err));
-		if (buffer && alIsBuffer(buffer))
-			{ alDeleteBuffers(1, &buffer); }
+		if (buffer && alIsBuffer(buffer)) { alDeleteBuffers(1, &buffer); }
 		return 0;
 	}
 
 	// add to the list of known buffers
-	p_SoundEffectBuffers.push_back(buffer);  
+	p_SoundBuffers.push_back(buffer);
 
 	return buffer;
 }
 
 
-// searches for and removes audio file from buffer (if found)
-bool SoundBuffer::removeSoundEffect(const ALuint& buffer)
+// searches for and removes audio file from memory (if found)
+bool SoundLibrary::unload(const ALuint& buffer)
 {
-	auto it = p_SoundEffectBuffers.begin();
-	while (it != p_SoundEffectBuffers.end())
+	auto it = p_SoundBuffers.begin();
+	while (it != p_SoundBuffers.end())
 	{
 		if (*it == buffer) // if found
 		{
@@ -114,13 +113,15 @@ bool SoundBuffer::removeSoundEffect(const ALuint& buffer)
 			alDeleteBuffers(1, &*it);
 
 			// remove from buffer tracking vector
-			it = p_SoundEffectBuffers.erase(it);
+			it = p_SoundBuffers.erase(it);
 
 			return true;
 		}
 
-		else 
-		{ ++it; } // traverse
+		else
+		{
+			++it;
+		} // traverse
 	}
 
 	return false;  // couldn't find to remove
@@ -128,16 +129,16 @@ bool SoundBuffer::removeSoundEffect(const ALuint& buffer)
 
 
 // initialize/clear buffer
-SoundBuffer::SoundBuffer()
+SoundLibrary::SoundLibrary()
 {
-	p_SoundEffectBuffers.clear();
+	p_SoundBuffers.clear();
 }
 
 
-// delete buffers from memory
-SoundBuffer::~SoundBuffer()
+// removes all loaded sounds from memory
+SoundLibrary::~SoundLibrary()
 {
-	alDeleteBuffers(static_cast<ALsizei>(p_SoundEffectBuffers.size()), p_SoundEffectBuffers.data());
+	alDeleteBuffers(static_cast<ALsizei>(p_SoundBuffers.size()), p_SoundBuffers.data());
 
-	p_SoundEffectBuffers.clear();
+	p_SoundBuffers.clear();
 }

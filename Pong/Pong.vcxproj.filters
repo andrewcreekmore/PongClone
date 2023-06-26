@@ -27,10 +27,10 @@
     <ClCompile Include="src\Framework\Audio\SoundDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Audio\SoundBuffer.cpp">
+    <ClCompile Include="src\Framework\Audio\SoundLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Audio\SoundSource.cpp">
+    <ClCompile Include="src\Framework\Audio\SoundPlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Entities\Entity.cpp">
@@ -56,10 +56,10 @@
     <ClInclude Include="src\Framework\Audio\SoundDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Framework\Audio\SoundBuffer.h">
+    <ClInclude Include="src\Framework\Audio\SoundLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Framework\Audio\SoundSource.h">
+    <ClInclude Include="src\Framework\Audio\SoundPlayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Entities\Entity.h">
@@ -75,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Framework\Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Audio\OpenAL_ErrorCheck.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

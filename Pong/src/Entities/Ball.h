@@ -8,11 +8,14 @@ class Ball : public Entity
 {
 public:
 
+	bool bHidden;
+
 	inline Ball() // sets defaults
 	{
 		halfSize_x = 1.f;
 		halfSize_y = 1.f;
 		velocity_x = 100.f;
+		bHidden = false;
 	}
 
 	// moves the ball's position within the arena
