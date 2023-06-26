@@ -1,6 +1,11 @@
 # C++ Pong 
 single-player: control right paddle w/ either W/S or UP/DOWN keys; compete against AI  
-multi-player: control right paddle w/ UP/DOWN keys while W/S controls left paddle
+multi-player: control right paddle w/ UP/DOWN keys while W/S controls left paddle  
+
+### dependencies
+
+- libsndfile
+- openal-soft
 
 <p align="center">
   <img src="https://github.com/andrewcreekmore/Pong/assets/44483269/325ace15-94f4-4bff-bb7a-efd89411500c" width="800" title="C++ Pong Main Menu">
