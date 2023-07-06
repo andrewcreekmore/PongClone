@@ -2,6 +2,13 @@
 
 #include "Utilities.h"
 
+/*
+===========================================================================
+Renderer: various basic rectangle-based rendering functions
+- can be used to draw shapes, numbers, and rect-based text (letter shapes)
+===========================================================================
+*/
+
 static float renderScale = 0.01f;
 
 void clearScreen(unsigned int color);

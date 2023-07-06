@@ -2,6 +2,13 @@
 #include <AL/alc.h>
 #include <AL/al.h>
 
+/*
+===========================================================================
+OpenAL_ErrorCheck.h:
+- wrapper for OpenAL error checking
+===========================================================================
+*/
+
 
 static void ALC_CheckAndThrow(ALCdevice* device)
 {

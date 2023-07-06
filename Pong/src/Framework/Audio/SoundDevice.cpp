@@ -3,9 +3,16 @@
 #include <stdio.h>
 #include "OpenAL_ErrorCheck.h"
 
+/*
+===========================================================================
+SoundDevice: OpenAL device implementation
+- gets the default system sound device and sets up AL sound context
+- provides methods for getting/setting device gain
+- singleton
+===========================================================================
+*/
 
 static SoundDevice* _instance = nullptr;
-
 
 SoundDevice* SoundDevice::get()
 {
@@ -13,13 +20,13 @@ SoundDevice* SoundDevice::get()
 	return _instance;
 }
 
-
 void SoundDevice::init()
 {
 	if (_instance == nullptr)
 		_instance = new SoundDevice();
 }
 
+//---------------------------// 
 
 float SoundDevice::getGain()
 {
@@ -29,7 +36,7 @@ float SoundDevice::getGain()
 	return currentGain;
 }
 
-
+//---------------------------
 // sets the master volume of our listeners, clamped
 void SoundDevice::setGain(const float& val)
 {
@@ -41,6 +48,7 @@ void SoundDevice::setGain(const float& val)
 	AL_CheckAndThrow();
 }
 
+//---------------------------// 
 
 SoundDevice::SoundDevice()
 {
@@ -63,7 +71,6 @@ SoundDevice::SoundDevice()
 		name = alcGetString(p_ALCDevice, ALC_DEVICE_SPECIFIER);
 	printf("opened \"%s\"\n", name);
 }
-
 
 SoundDevice::~SoundDevice()
 {

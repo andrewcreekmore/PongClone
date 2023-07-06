@@ -1,5 +1,11 @@
 #include "Renderer.h"
 
+/*
+===========================================================================
+Renderer: various basic rectangle-based rendering functions
+- can be used to draw shapes and rudimentary text + numbers
+===========================================================================
+*/
 
 void clearScreen(unsigned int color)
 {
@@ -11,6 +17,7 @@ void clearScreen(unsigned int color)
 	}
 }
 
+//---------------------------// 
 
 void drawRectInPixels(int x0, int y0, int x1, int y1, unsigned int color)
 {
@@ -28,6 +35,7 @@ void drawRectInPixels(int x0, int y0, int x1, int y1, unsigned int color)
 	}
 }
 
+//---------------------------// 
 
 void drawRect(float x, float y, float halfSize_x, float halfSize_y, unsigned int color)
 {
@@ -50,6 +58,7 @@ void drawRect(float x, float y, float halfSize_x, float halfSize_y, unsigned int
 	drawRectInPixels(x0, y0, x1, y1, color);
 }
 
+//---------------------------// 
 
 void drawArenaBoundaries(float arena_x, float arena_y, unsigned int color)
 {
@@ -67,6 +76,7 @@ void drawArenaBoundaries(float arena_x, float arena_y, unsigned int color)
 	drawRectInPixels(x1, y0, renderState.width, renderState.height, color);
 }
 
+//---------------------------// 
 
 const char* letters[][7] = {
 	" 00",
@@ -284,6 +294,8 @@ const char* letters[][7] = {
 	"  0  ",
 };
 
+//---------------------------// 
+
 void drawRectText(const char* textContent, float position_x, float position_y, float textSize, unsigned int textColor) 
 {
 	float halfSize = textSize * .5f;
@@ -330,6 +342,7 @@ void drawRectText(const char* textContent, float position_x, float position_y, f
 	}
 }
 
+//---------------------------// 
 
 void drawRectNumber(int numValue, float numPosition_x, float numPosition_y, float numSize, unsigned int numColor)
 {

@@ -1,10 +1,19 @@
 #include <windows.h>
 #include "Win32_Platform.h"
 #include "Platform_Common.h"
-#include "../Framework/Renderer.cpp"
-#include "../Framework/Utilities.h"
-#include "../Game.cpp"
+#include "Framework/Renderer.cpp"
+#include "Framework/Utilities.h"
+#include "Game.cpp"
 
+/*
+===========================================================================
+Win32_Platform: Windows platform-specific entry point
+- contains GameWindowCallback and WinMain functions
+===========================================================================
+*/
+
+bool bAppRunning = true;
+Game currentGame;
 
 LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -18,19 +27,24 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			int response = MessageBox(hwnd, "Really quit?", "Pong", MB_OKCANCEL);
 
 			if (response == IDOK)
-			{ DestroyWindow(hwnd); }
+			{ 
+				DestroyWindow(hwnd); 
+				system("taskkill /f /im Pong.exe");
+			}
 
 			else // resume
 			{ 
-				unpauseGame();
+				currentGame.unpauseGame();
 				ShowCursor(false); 
 			}
 		}
 		break;
 
 		case WM_DESTROY:
-		{ bAppRunning = false; }
-		PostQuitMessage(0);
+		{ 
+			bAppRunning = false; 
+			PostQuitMessage(0);
+		}
 		break;
 
 		case WM_SIZE: 
@@ -63,6 +77,7 @@ LRESULT CALLBACK GameWindowCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return result;
 }
 
+//---------------------------// 
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -79,15 +94,16 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 	// create Game Window
 	HWND gameWindow = CreateWindow(GameWindowClass.lpszClassName, "Pong by Andrew Creekmore", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
-	parentWindow = gameWindow;
-	{
-		// make game window full-screen
-		SetWindowLong(gameWindow, GWL_STYLE, GetWindowLong(gameWindow, GWL_STYLE) & ~WS_OVERLAPPEDWINDOW);
-		MONITORINFO monitorInfo = { sizeof(monitorInfo) };
-		GetMonitorInfo(MonitorFromWindow(gameWindow, MONITOR_DEFAULTTOPRIMARY), &monitorInfo);
-		SetWindowPos(gameWindow, HWND_TOP, monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top, monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-	}
-	HDC hdc = GetDC(gameWindow); // device context
+	currentGame.setParentWindow(gameWindow); // set on game object
+
+	// make game window full-screen
+	SetWindowLong(gameWindow, GWL_STYLE, GetWindowLong(gameWindow, GWL_STYLE) & ~WS_OVERLAPPEDWINDOW);
+	MONITORINFO monitorInfo = { sizeof(monitorInfo) };
+	GetMonitorInfo(MonitorFromWindow(gameWindow, MONITOR_DEFAULTTOPRIMARY), &monitorInfo);
+	SetWindowPos(gameWindow, HWND_TOP, monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top, monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	
+	// set device context
+	HDC hdc = GetDC(gameWindow); 
 
 	// create input struct
 	Input input = {};
@@ -162,7 +178,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		}
 
 		// simulate
-		simulateGame(&input, deltaTime, parentWindow);
+		currentGame.simulateGame(&input, deltaTime);
 
 		// render
 		StretchDIBits(hdc, 0, 0, renderState.width, renderState.height, 0, 0, renderState.width, renderState.height, renderState.memory, &renderState.bitmapInfo, DIB_RGB_COLORS, SRCCOPY);

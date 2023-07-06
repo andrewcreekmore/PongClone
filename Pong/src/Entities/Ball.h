@@ -1,8 +1,15 @@
 #pragma once
 
 #include "Entity.h"
-#include "../Framework/Utilities.h"
+#include "Framework/Utilities.h"
 
+/*
+===========================================================================
+Ball: entity representing a ping-pong ball
+- has additional bHidden flag
+- provides move, reset, and arena collision-check functions
+===========================================================================
+*/
 
 class Ball : public Entity
 {
@@ -19,10 +26,10 @@ public:
 	}
 
 	// moves the ball's position within the arena
-	void move(float deltaTime, Entity arena);
+	void move(float deltaTime);
 
 	// returns whether/how this entity collides with the boundaries of the arena
-	virtual arenaCollision checkForArenaBoundaryCollision(Entity arena) override;
+	virtual arenaCollision checkForArenaBoundaryCollision(float arenaHalfSize_x, float arenaHalfSize_y) override;
 
 	// resets position and velocity of ball
 	void reset();

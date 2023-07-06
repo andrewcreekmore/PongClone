@@ -3,6 +3,12 @@
 #include <inttypes.h>
 #include <AL\alext.h>
 
+/*
+===========================================================================
+SoundLibrary: collection of OpenAL sound buffers
+- provides methods for loading/unloading sound files into/from memory
+===========================================================================
+*/
 
 // singleton getter method; returns a pointer to the only instantiation allowed
 SoundLibrary* SoundLibrary::get()
@@ -10,7 +16,6 @@ SoundLibrary* SoundLibrary::get()
 	static SoundLibrary* sndbuf = new SoundLibrary();
 	return sndbuf;
 }
-
 
 // loads sound file into memory; returns buffer ID for accessing
 ALuint SoundLibrary::load(const char* fileName)
@@ -44,18 +49,18 @@ ALuint SoundLibrary::load(const char* fileName)
 	// get the sound format + figure out the OpenAL format
 	format = AL_NONE;
 	if (sfInfo.channels == 1)
-	{ format = AL_FORMAT_MONO16; }
+		format = AL_FORMAT_MONO16;
 	else if (sfInfo.channels == 2)
-	{ format = AL_FORMAT_STEREO16; }
+		format = AL_FORMAT_STEREO16;
 	else if (sfInfo.channels == 3)
 	{
 		if (sf_command(sndFile, SFC_WAVEX_GET_AMBISONIC, NULL, 0) == SF_AMBISONIC_B_FORMAT)
-		{ format = AL_FORMAT_BFORMAT2D_16; }
+			format = AL_FORMAT_BFORMAT2D_16;
 	}
 	else if (sfInfo.channels == 4)
 	{
 		if (sf_command(sndFile, SFC_WAVEX_GET_AMBISONIC, NULL, 0) == SF_AMBISONIC_B_FORMAT)
-		{ format = AL_FORMAT_BFORMAT3D_16; }
+			format = AL_FORMAT_BFORMAT3D_16;
 	}
 	if (!format)
 	{
@@ -100,6 +105,7 @@ ALuint SoundLibrary::load(const char* fileName)
 	return buffer;
 }
 
+//---------------------------// 
 
 // searches for and removes audio file from memory (if found)
 bool SoundLibrary::unload(const ALuint& buffer)
@@ -127,13 +133,13 @@ bool SoundLibrary::unload(const ALuint& buffer)
 	return false;  // couldn't find to remove
 }
 
+//---------------------------// 
 
 // initialize/clear buffer
 SoundLibrary::SoundLibrary()
 {
 	p_SoundBuffers.clear();
 }
-
 
 // removes all loaded sounds from memory
 SoundLibrary::~SoundLibrary()

@@ -1,29 +1,32 @@
 #include "Game.h"
 
-
-// construct game entities
-Arena arena;
-Paddle player(80.f); // positioned to right
-Paddle enemy(-80.f); // positioned to left
-Ball ball;
-
-// retrieve default sound device
-SoundDevice* currentSoundDevice = LISTENER->get();
-
-// create sound players + load SFX
-SoundPlayer paddleSoundPlayer;
-SoundPlayer arenaBoundarySoundPlayer(2.5f);
-SoundPlayer scoredPointSoundPlayer(0.5f);
-int paddleImpactSound = SFX_LOAD(".\\res\\Sounds\\Pop.ogg");
-int arenaBoundaryImpactSound = SFX_LOAD(".\\res\\Sounds\\pingpongboard.ogg");
-int scoredPointSound = SFX_LOAD(".\\res\\Sounds\\applause-mono-24bit-48khz.wav");
+/*
+===========================================================================
+Game: overall game-loop logic
+- manages game state (in-menu, in-round, round active status)
+- handles simulation of current round
+- handles UI input (main menu, pause menu)
+===========================================================================
+*/
 
 
+Game::Game()
+	: arena(), player(80.f), enemy(-80.f), ball()
+{
+	currentGameMode = GM_MAINMENU;
+	bGamePaused = false;
+	bRoundActive = false;
+	bActiveEnemyAI = true;
+	activeMainMenuButton = 0;
+	activePauseMenuButton = 0;
+}
+
+//---------------------------
 // handles overall game process
-void simulateGame(Input* input, float deltaTime, HWND parentWindow)
+void Game::simulateGame(Input* input, float deltaTime)
 {
 	clearScreen(0x000000);
-
+	
 	// render arena
 	drawRect(0, 0, arena.halfSize_x, arena.halfSize_y, arena.color);
 	drawArenaBoundaries(arena.halfSize_x, arena.halfSize_y, 0xffffff);
@@ -60,27 +63,28 @@ void simulateGame(Input* input, float deltaTime, HWND parentWindow)
 	}
 }
 
-
+//---------------------------
 // handles ball/paddle movement + AI
-void simulateRound(float deltaTime)
+void Game::simulateRound(float deltaTime)
 {
 	if (bRoundActive)
 	{
 		handleBallCollision();
-		ball.move(deltaTime, arena);
+		ball.move(deltaTime);
 	}
 
 	handlePaddleCollision(player);
-	handlePaddleCollision(enemy);
+	player.move(deltaTime);
 
-	player.move(deltaTime, arena);
-	if (bActiveEnemyAI) { decideNextMoveAI(); }
-	enemy.move(deltaTime, arena);
+	handlePaddleCollision(enemy);
+	if (bActiveEnemyAI)
+		decideNextMoveAI();
+	enemy.move(deltaTime);
 }
 
-
+//---------------------------
 // handle player (right paddle) movement input
-void handleMovementInput(Input* input, float deltaTime)
+void Game::handleMovementInput(Input* input, float deltaTime)
 {
 	player.acceleration = 0.f; // reset
 	if (isDown(KEY_UP)) { player.acceleration += 1500; }
@@ -100,9 +104,9 @@ void handleMovementInput(Input* input, float deltaTime)
 	}
 }
 
-
+//---------------------------
 // for use from main or pause menus; starts fresh game
-void startNewGame(bool activeAI)
+void Game::startNewGame(bool activeAI)
 {
 	stopRoundSFX();
 	currentGameMode = GM_GAMEPLAY;
@@ -118,65 +122,66 @@ void startNewGame(bool activeAI)
 	bRoundActive = true;
 }
 
-
+//---------------------------
 // flags round as inactive then resumes after brief delay; for use after points scored
-void setupNextRound()
+void Game::setupNextRound(Game *currentGame)
 {
-	bRoundActive = false;
+	currentGame->bRoundActive = false;
 	delay(2);
-	ball.bHidden = false;
+	currentGame->ball.bHidden = false;
 	delay(1);
 
-	if (!bGamePaused) // don't begin if game was paused during delay
-	{ bRoundActive = true; }
+	if (!currentGame->bGamePaused) // don't begin if game was paused during delay
+	{ currentGame->bRoundActive = true; }
 }
 
-
+//---------------------------
 // hides/resets ball + calls setupNextRound() in own thread
-void resetRound()
+void Game::resetRound()
 {
 	ball.bHidden = true;
 	ball.reset();
 
-	std::thread setupNextRoundThread(setupNextRound);
+	std::thread setupNextRoundThread(setupNextRound, this);
 	setupNextRoundThread.detach();
 }
 
-
+//---------------------------
 // flags round as inactive while paused
-void pauseCurrentRound()
+void Game::pauseCurrentRound(Game* currentGame)
 {
-	bRoundActive = false;
+	currentGame->bRoundActive = false;
 
-	while (bGamePaused)
-	{ delay(1); }
+	while (currentGame->bGamePaused)
+		delay(1);
 
 	// resume
-	currentGameMode = GM_GAMEPLAY;
-	bRoundActive = true;
+	currentGame->currentGameMode = GM_GAMEPLAY;
+	currentGame->bRoundActive = true;
 }
 
-
+//---------------------------
 // pauses the current round in own thread
-void pauseGame()
+void Game::pauseGame()
 {
 	pauseRoundSFX();
 	bGamePaused = true;
-	std::thread pauseThread(pauseCurrentRound);
+
+	std::thread pauseThread(pauseCurrentRound, this);
 	pauseThread.detach();
 }
 
-
+//---------------------------
 // resumes any paused in-round SFX + unflags bGamePaused
-void unpauseGame()
+void Game::unpauseGame()
 {
 	resumeRoundSFX();
 	bGamePaused = false;
 }
 
-
+//---------------------------
 // draws elements of current round to screen
-void renderRound()
+void Game::renderRound()
 {
 	// render player / enemy AI scores
 	drawRectNumber(enemy.score, -15.f, 40.f, 1.f, 0xbbffbb);
@@ -190,9 +195,9 @@ void renderRound()
 	drawRect(player.position_x, player.position_y, player.halfSize_x, player.halfSize_y, player.color);
 }
 
-
+//---------------------------
 // renders main menu
-void drawMainMenu(int activeButton)
+void Game::drawMainMenu(int activeButton)
 {
 	float position_x = -30.f;
 	float mainMenu_SinglePlayerPosition_y = -15.f;
@@ -210,9 +215,9 @@ void drawMainMenu(int activeButton)
 	drawRectText("EXIT", position_x, mainMenu_ExitPosition_y, (activeButton == 2 ? highlightedSize : defaultSize), (activeButton == 2 ? 0xff0000 : 0xffffff));
 }
 
-
+//---------------------------
 // processes user input (main menu)
-void handleMainMenuInput(Input* input)
+void Game::handleMainMenuInput(Input* input)
 {
 	if (pressed(KEY_W) || pressed(KEY_UP)) // choose game mode
 	{
@@ -245,9 +250,9 @@ void handleMainMenuInput(Input* input)
 	}
 }
 
-
+//---------------------------
 // renders pause menu overlay
-void drawPauseMenu(int activeButton)
+void Game::drawPauseMenu(int activeButton)
 {
 	float position_x = -20.f;
 	float pauseMenu_ResumePosition_y = 18.f;
@@ -271,12 +276,12 @@ void drawPauseMenu(int activeButton)
 	drawRectText("EXIT", position_x, pauseMenu_ExitPosition_y, (activeButton == 3 ? highlightedSize : defaultSize), (activeButton == 3 ? highlightedColor : defaultColor));
 }
 
-
+//---------------------------
 // processes user input (pause menu)
-void handlePauseMenuInput(Input* input)
+void Game::handlePauseMenuInput(Input* input)
 {
 	if (pressed(KEY_ESC)) // resume
-	{ bGamePaused = false; }
+		bGamePaused = false;
 
 	if (pressed(KEY_W) || pressed(KEY_UP))
 	{ 
@@ -315,9 +320,9 @@ void handlePauseMenuInput(Input* input)
 	}
 }
 
-
+//---------------------------
 // checks if the ball has hit another entity and handles the collision response
-void handleBallCollision()
+void Game::handleBallCollision()
 {
 	// collision check: with player
 	if (ball.aabbVSaabb(player))
@@ -342,7 +347,7 @@ void handleBallCollision()
 	}
 
 	// collision check: arena boundaries
-	arenaCollision result = ball.checkForArenaBoundaryCollision(arena);
+	arenaCollision result = ball.checkForArenaBoundaryCollision(arena.halfSize_x, arena.halfSize_y);
 
 	if (result != NO_COLLISION)
 	{ 
@@ -388,12 +393,12 @@ void handleBallCollision()
 	}
 }
 
-
+//---------------------------
 // checks if a paddle has hit an arena boundary and handles the collision response
-void handlePaddleCollision(Paddle &paddle)
+void Game::handlePaddleCollision(Paddle &paddle)
 {
 	// collision check: arena boundaries
-	arenaCollision result = paddle.checkForArenaBoundaryCollision(arena);
+	arenaCollision result = paddle.checkForArenaBoundaryCollision(arena.halfSize_y);
 
 	switch (result)
 	{
@@ -412,9 +417,9 @@ void handlePaddleCollision(Paddle &paddle)
 	}
 }
 
-
+//---------------------------
 // for enemy AI paddle in single-player: determine next movement
-void decideNextMoveAI()
+void Game::decideNextMoveAI()
 {
 	if (!bActiveEnemyAI) { return; }
 
@@ -453,27 +458,27 @@ void decideNextMoveAI()
 	}
 }
 
-
+//---------------------------
 // pauses all in-round SFX
-void pauseRoundSFX()
+void Game::pauseRoundSFX()
 {
 	paddleSoundPlayer.pause();
 	arenaBoundarySoundPlayer.pause();
 	scoredPointSoundPlayer.pause();
 }
 
-
+//---------------------------
 // resumes any currently-paused in-round SFX
-void resumeRoundSFX()
+void Game::resumeRoundSFX()
 {
 	paddleSoundPlayer.resume();
 	arenaBoundarySoundPlayer.resume();
 	scoredPointSoundPlayer.resume();
 }
 
-
+//---------------------------
 // stops playback of all in-round SFX
-void stopRoundSFX()
+void Game::stopRoundSFX()
 {
 	paddleSoundPlayer.stop();
 	arenaBoundarySoundPlayer.stop();

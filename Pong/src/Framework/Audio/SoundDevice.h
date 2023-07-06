@@ -4,6 +4,15 @@
 #define SD_INIT SoundDevice::init();
 #define LISTENER SoundDevice::get()
 
+/*
+===========================================================================
+SoundDevice: OpenAL implementation
+- gets the default system sound device and sets up AL sound context
+- provides methods for getting/setting device gain
+- singleton
+===========================================================================
+*/
+
 class SoundDevice
 {
 public:

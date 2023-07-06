@@ -1,5 +1,12 @@
 #include "SoundPlayer.h"
 
+/*
+===========================================================================
+SoundPlayer: OpenAL sound source implementation
+- generates a sound source and sets default pitch, gain, position, etc
+- provides methods for playback control + optional spatialization via setPosition
+===========================================================================
+*/
 
 SoundPlayer::SoundPlayer()
 {
@@ -10,7 +17,6 @@ SoundPlayer::SoundPlayer()
 
 	AL_CheckAndThrow();
 }
-
 
 SoundPlayer::SoundPlayer(float gain)
 {
@@ -23,12 +29,12 @@ SoundPlayer::SoundPlayer(float gain)
 	AL_CheckAndThrow();
 }
 
-
 SoundPlayer::~SoundPlayer()
 {
 	alDeleteSources(1, &p_Source);
 }
 
+//---------------------------// 
 
 void SoundPlayer::play(const ALuint bufferToPlay)
 {
@@ -42,20 +48,17 @@ void SoundPlayer::play(const ALuint bufferToPlay)
 	AL_CheckAndThrow();
 }
 
-
 void SoundPlayer::stop()
 {
 	alSourceStop(p_Source);
 	AL_CheckAndThrow();
 }
 
-
 void SoundPlayer::pause()
 {
 	alSourcePause(p_Source);
 	AL_CheckAndThrow();
 }
-
 
 void SoundPlayer::resume()
 {
@@ -66,6 +69,7 @@ void SoundPlayer::resume()
 	}
 }
 
+//---------------------------// 
 
 bool SoundPlayer::isPlaying()
 {
@@ -74,13 +78,14 @@ bool SoundPlayer::isPlaying()
 	return (playState == AL_PLAYING);
 }
 
-
 bool SoundPlayer::isPaused()
 {
 	ALint playState;
 	alGetSourcei(p_Source, AL_SOURCE_STATE, &playState);
 	return (playState == AL_PAUSED);
 }
+
+//---------------------------// 
 
 void SoundPlayer::setBufferToPlay(const ALuint& bufferToPlay)
 {
@@ -92,7 +97,6 @@ void SoundPlayer::setBufferToPlay(const ALuint& bufferToPlay)
 	}
 }
 
-
 void SoundPlayer::setGain(const float& val)
 {
 	float newVolume = val;
@@ -101,17 +105,14 @@ void SoundPlayer::setGain(const float& val)
 	alSourcef(p_Source, AL_GAIN, newVolume);
 }
 
-
 void SoundPlayer::setLooping(const bool& bShouldLoop)
 {
 	alSourcei(p_Source, AL_LOOPING, (ALint)bShouldLoop);
 	AL_CheckAndThrow();
 }
 
-
 void SoundPlayer::setPosition(const float& x, const float& y, const float& z)
 {
 	alSource3f(p_Source, AL_POSITION, x, y, z);
 	AL_CheckAndThrow();
 }
-

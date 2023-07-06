@@ -2,6 +2,13 @@
 
 #include <time.h>
 
+/*
+===========================================================================
+Utilities.h: various utility functions
+- clamps, delay
+===========================================================================
+*/
+
 inline int clampInt(int min, int val, int max)
 {
 	if (val < min) return min;

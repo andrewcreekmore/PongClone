@@ -3,6 +3,14 @@
 #include <iostream>
 #include "OpenAL_ErrorCheck.h"
 
+/*
+===========================================================================
+SoundPlayer: OpenAL sound source implementation
+- generates a sound source and sets default pitch, gain, position, etc
+- provides methods for playback control + optional spatialization via setPosition
+===========================================================================
+*/
+
 class SoundPlayer
 {
 public:
@@ -32,4 +40,3 @@ private:
 
 	float p_Gain = 1.f;
 };
-

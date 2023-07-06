@@ -1,7 +1,15 @@
 #pragma once
 
 #include "Entity.h"
+#include "Framework/Utilities.h"
 
+/*
+===========================================================================
+Paddle: entity representing a ping-pong paddle, player or AI
+- has additional score variable and AI-related flags
+- provides move, reset, and arena collision-check functions
+===========================================================================
+*/
 
 class Paddle : public Entity
 {
@@ -22,11 +30,11 @@ public:
 	}
 
 	// moves the paddle's position within the arena
-	void move(float deltaTime, Entity arena);
+	void move(float deltaTime);
 
 	// resets paddle back to round starting position
 	void reset();
 
 	// returns whether/how this entity collides with the boundaries of the arena
-	virtual arenaCollision checkForArenaBoundaryCollision(Entity arena) override;
+	virtual arenaCollision checkForArenaBoundaryCollision(float arenaHalfSize_y) override;
 };

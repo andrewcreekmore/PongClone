@@ -1,5 +1,12 @@
 #pragma once
 
+/*
+===========================================================================
+Entity: abstract game-object base class; a thing existing in the game-world
+- has position, velocity, acceleration, size, and color member variables
+- provides collision-checking functions (for both dynamic/static others)
+===========================================================================
+*/
 
 enum arenaCollision
 {
@@ -9,7 +16,6 @@ enum arenaCollision
 	LEFT_COLLISION,
 	RIGHT_COLLISION
 };
-
 
 class Entity
 {
@@ -26,12 +32,14 @@ public:
 		acceleration(0.f), color(0xffffff), halfSize_x(0.f), halfSize_y(0.f)
 	{}
 
-	// returns whether this entity collides with another; for use between non-static entities
+	// returns whether this entity collides with another class instance
 	bool aabbVSaabb(Entity other);
 
 	// returns whether/how this entity collides with the boundaries of the arena
-	virtual arenaCollision checkForArenaBoundaryCollision(Entity arena);
+	inline virtual arenaCollision checkForArenaBoundaryCollision(float arenaHalfSize_y) { return NO_COLLISION; }
+	inline virtual arenaCollision checkForArenaBoundaryCollision(float arenaHalfSize_x, float arenaHalfSize_y) { return NO_COLLISION; }
 
+	// returns an adjusted positional value to account for gain loss due to spatialization
 	inline float getAudioPosition_x() { return position_x / 8.f; }
 	inline float getAudioPosition_y() { return position_y / 8.f; }
 };
