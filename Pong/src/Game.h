@@ -42,13 +42,19 @@ struct Arena
 // retrieve default sound device
 SoundDevice* currentSoundDevice = LISTENER->get();
 
-// create sound players + load SFX
+// create gameplay sound players + load SFX
 SoundPlayer paddleSoundPlayer;
 SoundPlayer arenaBoundarySoundPlayer(2.5f);
 SoundPlayer scoredPointSoundPlayer(0.5f);
 int paddleImpactSound = SFX_LOAD(".\\res\\Sounds\\Pop.ogg");
 int arenaBoundaryImpactSound = SFX_LOAD(".\\res\\Sounds\\pingpongboard.ogg");
 int scoredPointSound = SFX_LOAD(".\\res\\Sounds\\applause-mono-24bit-48khz.wav");
+
+// create UI sound players + load SFX
+SoundPlayer mainMenuStartupPlayer(.75f);
+SoundPlayer menuMovePlayer(0.5f);
+int mainMenuStartupSound = SFX_LOAD(".\\res\\Sounds\\sfx_sounds_fanfare3.wav");
+int menuMoveSound = SFX_LOAD(".\\res\\Sounds\\sfx_menu_move1.wav");
 
 //---------------------------// 
 
@@ -72,6 +78,7 @@ private:
 	bool bRoundActive;
 	bool bActiveEnemyAI;
 	int activeMainMenuButton;
+	bool bPlayMenuStartupSound;
 	int activePauseMenuButton;
 
 public:

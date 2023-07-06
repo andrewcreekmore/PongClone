@@ -9,7 +9,6 @@ Game: overall game-loop logic
 ===========================================================================
 */
 
-
 Game::Game()
 	: arena(), player(80.f), enemy(-80.f), ball()
 {
@@ -19,6 +18,7 @@ Game::Game()
 	bActiveEnemyAI = true;
 	activeMainMenuButton = 0;
 	activePauseMenuButton = 0;
+	bPlayMenuStartupSound = true;
 }
 
 //---------------------------
@@ -54,6 +54,12 @@ void Game::simulateGame(Input* input, float deltaTime)
 	{
 		handleMainMenuInput(input);
 		drawMainMenu(activeMainMenuButton);
+
+		if (bPlayMenuStartupSound)
+		{
+			mainMenuStartupPlayer.play(mainMenuStartupSound);
+			bPlayMenuStartupSound = false;
+		}	
 	}
 
 	else if (currentGameMode == GM_PAUSEMENU)
@@ -223,12 +229,14 @@ void Game::handleMainMenuInput(Input* input)
 	{
 		if (activeMainMenuButton > 0) { activeMainMenuButton--; }
 		else { activeMainMenuButton = 2; } // wrap around to last menu option
+		menuMovePlayer.play(menuMoveSound);
 	}
 
 	if (pressed(KEY_S) || pressed(KEY_DOWN))
 	{
 		if (activeMainMenuButton < 2) { activeMainMenuButton++; }
 		else { activeMainMenuButton = 0; } // wrap around to first menu option
+		menuMovePlayer.play(menuMoveSound);
 	}
 
 	if (pressed(KEY_ENTER) || pressed(KEY_SPACE))
@@ -287,12 +295,14 @@ void Game::handlePauseMenuInput(Input* input)
 	{ 
 		if (activePauseMenuButton > 0) { activePauseMenuButton--; }
 		else { activePauseMenuButton = 3; } // wrap around to last menu option
+		menuMovePlayer.play(menuMoveSound);
 	}
 
 	if (pressed(KEY_S) || pressed(KEY_DOWN))
 	{ 
 		if (activePauseMenuButton < 3) { activePauseMenuButton++; }
 		else { activePauseMenuButton = 0; } // wrap around to first menu option
+		menuMovePlayer.play(menuMoveSound);
 	}
 
 	if (pressed(KEY_ENTER) || pressed(KEY_SPACE))
@@ -305,11 +315,11 @@ void Game::handlePauseMenuInput(Input* input)
 
 		case 1: // NEW GAME (same mode as current)
 			startNewGame(bActiveEnemyAI);
-			
 			break;
 
 		case 2: // MAIN MENU
 			activeMainMenuButton = 0; // always start at top option (single-player)
+			bPlayMenuStartupSound = true;
 			currentGameMode = GM_MAINMENU;
 			break;
 
