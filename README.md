@@ -2,6 +2,13 @@
 single-player: control right paddle w/ either W/S or UP/DOWN keys; compete against AI  
 multi-player: control right paddle w/ UP/DOWN keys while W/S controls left paddle  
 
+A clone of the classic game “Pong” written in C++ without an engine. 
+
+Features basic opponent AI for single-player use, or the opposing paddle can be controlled manually.  
+Functional pause/resume options and round/score tracking. Spatialized gameplay sound effects.  
+Main and in-game pause menu.
+
+
 ### dependencies
 
 - libsndfile
